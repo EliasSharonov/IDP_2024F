@@ -15,8 +15,9 @@ int rawOutVoltage;
 float outVoltage;
 float integral = 0;
 float previousError = 0;
+float dutyCycle = 0;
 unsigned long lastTime = 0;
-
+unsigned long timeStamp = 0; // Merge with lastTime???
 
 void setup() {
   pinMode(PWMOUT_PIN, OUTPUT);
@@ -24,13 +25,20 @@ void setup() {
 }
 
 void loop() {
+  timeStamp = millis();
+  digitalWrite(PWMOUT_PIN, HIGH);
   rawOutVoltage = analogRead(VINREG_PIN);
-  outVoltage = ((float)rawOutVoltage / DIVIDER_CONSTANT) / 1024.0;
 
-  //voltageRegulation(PID_Control(outVoltage, 0.05, 0.05, 0.05));
-  while (1) {
-  voltageRegulation(0.53);
+  while (timeStamp - millis() < FET_PERIOD * dutyCycle) {
+    delayMicroseconds(1);
   }
+  timeStamp = millis();
+  outVoltage = ((float)rawOutVoltage / DIVIDER_CONSTANT) / 1024.0;
+  while (timeStamp - millis() < FET_PERIOD * (1 - dutyCycle)) {
+    delayMicroseconds(1);
+  }
+  digitalWrite(PWMOUT_PIN, LOW);
+  dutyCycle = 0.53;
 }
 
 
