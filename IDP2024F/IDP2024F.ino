@@ -34,10 +34,10 @@ void loop() {
   }
   timeStamp = millis();
   outVoltage = ((float)rawOutVoltage / DIVIDER_CONSTANT) / 1024.0;
+  digitalWrite(PWMOUT_PIN, LOW);
   while (timeStamp - millis() < FET_PERIOD * (1 - dutyCycle)) {
     delayMicroseconds(1);
   }
-  digitalWrite(PWMOUT_PIN, LOW);
   dutyCycle = 0.53;
 }
 
