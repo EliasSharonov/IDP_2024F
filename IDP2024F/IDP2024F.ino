@@ -3,7 +3,7 @@
 #define VINREG_PIN 9
 
 // Declare other constants here
-#define FET_PERIOD 10
+#define FET_PERIOD 5
 #define DIVIDER_CONSTANT 4
 #define IDEAL_DUTY_CYCLE 0.53
 #define DUTY_CYCLE_CONSTANT 0.01
@@ -27,7 +27,10 @@ void loop() {
   rawOutVoltage = analogRead(VINREG_PIN);
   outVoltage = ((float)rawOutVoltage / DIVIDER_CONSTANT) / 1024.0;
 
-  voltageRegulation(PID_Control(outVoltage, 0.05, 0.05, 0.05));
+  //voltageRegulation(PID_Control(outVoltage, 0.05, 0.05, 0.05));
+  while (1) {
+  voltageRegulation(0.53);
+  }
 }
 
 
@@ -53,4 +56,3 @@ float PID_Control(float outVoltage, float P, float I, float D) {
 
     return output;
 }
-
