@@ -7,7 +7,7 @@
 #define DIVIDER_CONSTANT 4
 #define IDEAL_DUTY_CYCLE 0.53
 #define DUTY_CYCLE_CONSTANT 0.01
-#define IDEAL_INPUT_VOLTAGE 5
+#define IDEAL_INPUT_VOLTAGE 9
 
 
 // Variables belong here
