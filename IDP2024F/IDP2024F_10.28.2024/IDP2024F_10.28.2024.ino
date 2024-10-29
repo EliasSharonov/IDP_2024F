@@ -1,5 +1,3 @@
-#include "timer.h"
-
 // Declare pins here
 #define PWMOUT_PIN 10  // PB2
 #define VINREG_PIN A0
@@ -8,9 +6,10 @@
 // Declare other constants here
 #define FET_PERIOD 10 //microseconds
 #define DIVIDER_CONSTANT 11 // Approximately
-#define IDEAL_DUTY_CYCLE 0.53
+#define IDEAL_DUTY_CYCLE 0.6 // Increased baseline for higher duty cycle start
 #define DUTY_CYCLE_CONSTANT 0.01
 #define IDEAL_INPUT_VOLTAGE 10.0
+#define MAX_OUT_VOLTAGE 11.5 // Maximum output voltage limit
 
 // Variables
 float outVoltage;
@@ -29,8 +28,8 @@ unsigned long lastVoltageReadTime = 0;
 unsigned long lastPIDTime = 0;
 
 // PID constants
-#define kP 0.01
-#define kI 0.1
+#define kP 0.03  // Slightly increased proportional gain
+#define kI 0.05  // Increased integral gain to push the duty cycle higher
 #define kD 0.0
 
 void setup() {
@@ -88,15 +87,22 @@ void adjustPID() {
   dt = (currentMicros - lastTime) / 1000000.0;
   lastTime = currentMicros;
 
-  error = batteryVoltage + 1.5 - outVoltage;
-    Serial.println(error);
-  integral += error * dt;
+  error = batteryVoltage + 1.0 - outVoltage;
+
+  integral += error * dt;  // Accumulate integral without clamping
   derivative = (error - previousError) / dt;
 
-  dutyCycle = 0.53 + ((kP * error) + (kI * integral) + (kD * derivative));
+  dutyCycle = IDEAL_DUTY_CYCLE + (kP * error) + (kI * integral) + (kD * derivative);
 
+  // Clamp the duty cycle between 0 and 1
   if (dutyCycle > 1) dutyCycle = 1;
   if (dutyCycle < 0) dutyCycle = 0;
+
+  // Debugging information
+  Serial.print("Duty Cycle: ");
+  Serial.println(dutyCycle);
+  Serial.print("Output Voltage: ");
+  Serial.println(outVoltage);
 
   previousError = error;
 }
