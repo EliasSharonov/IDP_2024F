@@ -7,8 +7,6 @@
 #define FET_PERIOD 10 //microseconds
 #define DIVIDER_CONSTANT 11 // Approximately
 #define IDEAL_DUTY_CYCLE 0.6 // Increased baseline for higher duty cycle start
-#define DUTY_CYCLE_CONSTANT 0.01
-#define IDEAL_INPUT_VOLTAGE 10.0
 #define MAX_OUT_VOLTAGE 11.5 // Maximum output voltage limit
 
 // Variables
@@ -56,11 +54,11 @@ void setup() {
 void loop() {
   unsigned long currentTime = micros();
 
-  updatePWM();
+  OCR1B = (uint16_t)(dutyCycle * ICR1);
 
   if (currentTime - lastVoltageReadTime >= 10) {
-    readOutVoltage();
-    readBatteryVoltage();
+    outVoltage = ((float)analogRead(VINREG_PIN) * DIVIDER_CONSTANT) / 203.0;
+    batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
     lastVoltageReadTime = currentTime;
   }
 
@@ -68,18 +66,6 @@ void loop() {
     adjustPID();
     lastPIDTime = currentTime;
   }
-}
-
-void updatePWM() {
-  OCR1B = (uint16_t)(dutyCycle * ICR1);
-}
-
-void readOutVoltage() {
-  outVoltage = ((float)analogRead(VINREG_PIN) * DIVIDER_CONSTANT) / 203.0;
-}
-
-void readBatteryVoltage() {
-  batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
 }
 
 void adjustPID() {
