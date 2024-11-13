@@ -12,10 +12,10 @@
 #define IDEAL_DUTY_CYCLE 0.6 // Increased baseline for higher duty cycle start
 #define MAX_OUT_VOLTAGE 11.5 // Maximum output voltage limit
 
-#define THERMISTOR_NOMINAL 10000
-#define TEMPERATURE_NOMINAL 25
-#define B_COEFFICIENT 3350
-#define SERIES_RESISTOR 10000
+#define THERMISTOR_NOMINAL 10000.0
+#define TEMPERATURE_NOMINAL 25.0
+#define B_COEFFICIENT 3350.0
+#define SERIES_RESISTOR 10000.0
 
 // General variables
 float outVoltage;
@@ -73,7 +73,7 @@ void loop() {
 
 
 
-    temperature = log(SERIES_RESISTOR / (1023.0 / (float)analogRead(THERMISTOR_PIN) - 1.0));
+    temperature = log(SERIES_RESISTOR * (1023.0 / (float)analogRead(THERMISTOR_PIN) - 1.0));
     Serial.print("Debug resistance: ");
     Serial.println(temperature);
 
