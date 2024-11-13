@@ -74,7 +74,12 @@ void loop() {
     temperature = SERIES_RESISTOR / (1023.0 / analogRead(THERMISTOR_PIN) - 1);
     Serial.print("Debug resistance: ");
     Serial.println(temperature);
-    temperature = 1.0 / (log(temperature / THERMISTOR_NOMINAL) / B_COEFFICIENT + 1.0 / (TEMPERATURE_NOMINAL));
+
+    temperature = log(temperature / THERMISTOR_NOMINAL) / B_COEFFICIENT;
+    Serial.print("Debug logarithm: ");
+    Serial.println(temperature);
+
+    temperature = 1.0 / (temperature + 1.0 / (TEMPERATURE_NOMINAL));
     // Debugging
     Serial.print("Temperature: ");
     Serial.println(temperature);
