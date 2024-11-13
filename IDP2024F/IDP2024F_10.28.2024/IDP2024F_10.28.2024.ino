@@ -69,9 +69,12 @@ void loop() {
   if (currentTime - lastVoltageReadTime >= 10) {
     outVoltage = ((float)analogRead(VINREG_PIN) * DIVIDER_CONSTANT) / 203.0;
     batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
-    temperature = analogRead(THERMISTOR_PIN);
-    temperature = (1023.0 / temperature - 1) * SERIES_RESISTOR;
-    temperature = 1.0 / (log(temperature / THERMISTOR_NOMINAL) / B_COEFFICIENT + 1.0 / (TEMPERATURE_NOMINAL + 273.15)) - 273.15;
+
+
+    temperature = SERIES_RESISTOR / (1023.0 / analogRead(THERMISTOR_PIN) - 1);
+    Serial.print("Debug resistance: ");
+    Serial.println(temperature);
+    temperature = 1.0 / (log(temperature / THERMISTOR_NOMINAL) / B_COEFFICIENT + 1.0 / (TEMPERATURE_NOMINAL));
     // Debugging
     Serial.print("Temperature: ");
     Serial.println(temperature);
