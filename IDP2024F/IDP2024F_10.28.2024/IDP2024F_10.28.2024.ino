@@ -1,7 +1,10 @@
+
+
 // Declare pins here
 #define PWMOUT_PIN 10  // PB2
 #define VINREG_PIN A0
 #define BATTERY_PIN A1
+#define THERMISTOR_PIN A2 // Thermistor pin
 
 // Declare other constants here
 #define FET_PERIOD 10 //microseconds
@@ -9,9 +12,16 @@
 #define IDEAL_DUTY_CYCLE 0.6 // Increased baseline for higher duty cycle start
 #define MAX_OUT_VOLTAGE 11.5 // Maximum output voltage limit
 
-// Variables
+#define THERMISTOR_NOMINAL 10000
+#define TEMPERATURE_NOMINAL 25
+#define B_COEFFICIENT 3350
+#define SERIES_RESISTOR 10000
+
+// General variables
 float outVoltage;
 float batteryVoltage;
+int temperature;
+
 float dutyCycle = IDEAL_DUTY_CYCLE;
 
 // PID variables
@@ -59,6 +69,13 @@ void loop() {
   if (currentTime - lastVoltageReadTime >= 10) {
     outVoltage = ((float)analogRead(VINREG_PIN) * DIVIDER_CONSTANT) / 203.0;
     batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
+    temperature = analogRead(THERMISTOR_PIN);
+    temperature = (1023.0 / temperature - 1) * SERIES_RESISTOR;
+    temperature = 1.0 / (log(temperature / THERMISTOR_NOMINAL) / B_COEFFICIENT + 1.0 / (TEMPERATURE_NOMINAL + 273.15)) - 273.15;
+    // Debugging
+    Serial.print("Temperature: ");
+    Serial.println(temperature);
+
     lastVoltageReadTime = currentTime;
   }
 
@@ -85,10 +102,5 @@ void adjustPID() {
   if (dutyCycle < 0) dutyCycle = 0;
 
   // Debugging information
-  Serial.print("Duty Cycle: ");
-  Serial.println(dutyCycle);
-  Serial.print("Output Voltage: ");
-  Serial.println(outVoltage);
-
   previousError = error;
 }
