@@ -20,7 +20,7 @@
 // General variables
 float outVoltage;
 float batteryVoltage;
-int temperature;
+float temperature;
 
 float dutyCycle = IDEAL_DUTY_CYCLE;
 
