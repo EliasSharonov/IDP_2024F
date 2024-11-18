@@ -19,6 +19,7 @@
 float outVoltage;
 float batteryVoltage;
 int thermistorVoltage;
+float sourceVoltage;
 float dutyCycle = IDEAL_DUTY_CYCLE;
 
 // PID variables
@@ -80,8 +81,8 @@ void loop() {
   unsigned long currentTime = micros();
 
   // Sleep mode control
-  batteryVoltage = ((float)analogRead(VINPUT_PIN) * DIVIDER_CONSTANT) / 203.0;
-  if ((batteryVoltage <= VOLTAGE_THRESHOLD)) {
+  sourceVoltage = ((float)analogRead(VINPUT_PIN)*DIVIDER_CONSTANT)/ 203.0;
+  if ((sourceVoltage <= VOLTAGE_THRESHOLD)) {
     digitalWrite(SLEEP_INDICATOR_PIN, LOW); // Set LOW to indicate sleep mode
     Serial.println("Sleep Mode"); 
     enterSleepLoop();
@@ -132,6 +133,9 @@ void debugInfo() {
   Serial.print("Battery voltage: "); 
   Serial.print(batteryVoltage);
   Serial.println(" V"); 
+  Serial.print("Source voltage: "); 
+  Serial.print(sourceVoltage);
+  Serial.println(" V"); 
 }
 
 void adjustPID() {
@@ -169,8 +173,8 @@ void enterSleepLoop() {
 
       if (wdtInterruptCount >= 4) { // 8*4 = 32 seconds
         wdtInterruptCount = 0;
-        batteryVoltage = ((float)analogRead(VINPUT_PIN) * DIVIDER_CONSTANT) / 203.0;
-        if (batteryVoltage > VOLTAGE_THRESHOLD) {
+        sourceVoltage = ((float)analogRead(VINPUT_PIN)*DIVIDER_CONSTANT) / 203.0;
+        if (sourceVoltage > VOLTAGE_THRESHOLD) {
           digitalWrite(SLEEP_INDICATOR_PIN, HIGH); // Set HIGH when waking up
           return;
         }
