@@ -1,9 +1,10 @@
-
 // Declare pins here
 #define PWMOUT_PIN 10  // PB2
 #define VINREG_PIN A0
 #define BATTERY_PIN A1
 #define THERMISTOR_PIN A2
+#define SLEEP_INDICATOR_PIN 11  // Pin to indicate sleep mode
+#define VINPUT_PIN A3
 
 // Declare other constants here
 #define FET_PERIOD 10 //microseconds
@@ -11,7 +12,7 @@
 #define IDEAL_DUTY_CYCLE 0.6 // Increased baseline for higher duty cycle start
 #define MAX_OUT_VOLTAGE 11.5 // Maximum output voltage limit
 #define THERMISTOR_SERIAL_RESISTANCE 10000.0
-#define VOLTAGE_THRESHOLD 3.3
+#define VOLTAGE_THRESHOLD 5
 #define WAKE_UP_INTERVAL 30000 // (ms)
 
 // Variables
@@ -44,13 +45,14 @@ unsigned long lastPIDTime = 0;
 #define kI 0.05  // Increased integral gain to push the duty cycle higher
 #define kD 0.0
 
-
 // SETUP
-
 void setup() {
   pinMode(PWMOUT_PIN, OUTPUT);
   pinMode(BATTERY_PIN, INPUT);
   pinMode(VINREG_PIN, INPUT);
+  pinMode(SLEEP_INDICATOR_PIN, OUTPUT); // Initialize sleep indicator pin
+  
+  digitalWrite(SLEEP_INDICATOR_PIN, HIGH); // Start with HIGH to indicate active mode
 
   noInterrupts();
 
@@ -73,18 +75,20 @@ void setup() {
   Serial.begin(9600);
 }
 
-
 // PROGRAM LOOP
-
 void loop() {
   unsigned long currentTime = micros();
 
   // Sleep mode control
-  batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
+  batteryVoltage = ((float)analogRead(VINPUT_PIN) * DIVIDER_CONSTANT) / 203.0;
   if ((batteryVoltage <= VOLTAGE_THRESHOLD)) {
+    digitalWrite(SLEEP_INDICATOR_PIN, LOW); // Set LOW to indicate sleep mode
     Serial.println("Sleep Mode"); 
     enterSleepLoop();
   }
+
+  digitalWrite(SLEEP_INDICATOR_PIN, HIGH); // Set HIGH to indicate active mode
+
 
   // Duty cycle output
   OCR1B = (uint16_t)(dutyCycle * ICR1);
@@ -96,7 +100,7 @@ void loop() {
     lastVoltageReadTime = currentTime;
   }
   thermistorVoltage = analogRead(THERMISTOR_PIN);
-  convertTernperature();
+  convertTemperature();
 
   // Duty cycle adjustment
   if (currentTime - lastPIDTime >= 10) {
@@ -107,22 +111,14 @@ void loop() {
   delay(500);
 }
 
-
-
-
-
-
 // HELPER FUNCTIONS
-
-void convertTernperature() {
+void convertTemperature() {
   temperature = THERMISTOR_SERIAL_RESISTANCE * (1023.0 / (float)thermistorVoltage - 1.0);
   temperature = log(temperature);
   temperature = (1.0 / (TEMPERATURE_C1 + TEMPERATURE_C2*temperature + TEMPERATURE_C3*temperature*temperature*temperature));
   temperature = temperature - 273.15;
-  temperature = (temperature * 9.0)/ 5.0 + 32.0; 
-
+  temperature = (temperature * 9.0) / 5.0 + 32.0; 
 }
-
 
 void debugInfo() {
   Serial.print("Temperature: "); 
@@ -156,15 +152,13 @@ void adjustPID() {
   previousError = error;
 }
 
-
 // SLEEP LOOP
-
 void enterSleepLoop() {
   SMCR = (1 << SM1) | (1 << SE);
   while (true) {
     SMCR |= (1 << SE);
     do {
-    __asm__ __volatile__ ( "sleep" "\n\t" :: );
+      __asm__ __volatile__ ( "sleep" "\n\t" :: );
     } while(0);
     SMCR &= ~(1 << SE);
 
@@ -175,8 +169,9 @@ void enterSleepLoop() {
 
       if (wdtInterruptCount >= 4) { // 8*4 = 32 seconds
         wdtInterruptCount = 0;
-        batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
+        batteryVoltage = ((float)analogRead(VINPUT_PIN) * DIVIDER_CONSTANT) / 203.0;
         if (batteryVoltage > VOLTAGE_THRESHOLD) {
+          digitalWrite(SLEEP_INDICATOR_PIN, HIGH); // Set HIGH when waking up
           return;
         }
       }
@@ -184,9 +179,10 @@ void enterSleepLoop() {
   }
 }
 
-
 // Interrupt control
 ISR(WDT_vect) {
   Serial.println("Awake Mode"); 
+  debugInfo();
+
   wdtWakeUp = true;
 }
