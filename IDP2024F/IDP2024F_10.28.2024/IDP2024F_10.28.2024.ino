@@ -165,8 +165,8 @@ void enterSleepLoop() {
     SMCR |= (1 << SE);
     do {
     __asm__ __volatile__ ( "sleep" "\n\t" :: );
-    } while(0);
-    SMCR &= ~(1 << SE);
+    } while(0); // Giving processor time to wake up
+    SMCR &= ~(1 << SE); // Wake up
 
     if (wdtWakeUp) {
       wdtWakeUp = false;
@@ -176,8 +176,9 @@ void enterSleepLoop() {
       if (wdtInterruptCount >= 4) { // 8*4 = 32 seconds
         wdtInterruptCount = 0;
         batteryVoltage = ((float)analogRead(BATTERY_PIN) * DIVIDER_CONSTANT) / 203.0;
+
         if (batteryVoltage > VOLTAGE_THRESHOLD) {
-          return;
+          break;
         }
       }
     }
